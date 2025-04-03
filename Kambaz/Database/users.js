@@ -63,7 +63,7 @@ export default [
     lastName: "Banner",
     email: "bruce@avengers.com",
     dob: "1969-12-18",
-    role: "STUDENT",
+    role: "ADMIN",
     loginId: "001234566S",
     section: "S101",
     lastActivity: "2020-12-01",

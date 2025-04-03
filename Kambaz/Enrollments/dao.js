@@ -13,3 +13,4 @@ export function unenrollUserInCourse(userId, courseId) {
       !(enrollment.user === userId && enrollment.course === courseId)
   );
 }
+export const deleteUser = (userId) => model.deleteOne({ _id: userId });
