@@ -93,6 +93,7 @@ export default function UserRoutes(app) {
   app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
 
   const signin = async (req, res) => {
+    console.log("HERE SIGN IN");
     const { username, password } = req.body;
     const currentUser = await dao.findUserByCredentials(username, password);
     if (currentUser) {
