@@ -2,8 +2,6 @@ import * as dao from "./dao.js";
 import * as courseDao from "../Courses/dao.js";
 import * as enrollmentsDao from "../Enrollments/dao.js";
 
-// TODO update all with async await once their daos become mongodb?
-
 export default function UserRoutes(app) {
   const createUser = async (req, res) => {
     const user = await dao.createUser(req.body);
@@ -42,58 +40,48 @@ export default function UserRoutes(app) {
     res.json(currentUser);
   };
 
-  const enrollUserInCourse = (req, res) => {
-    let { userId, courseId } = req.params;
-    if (userId === "current") {
+  const enrollUserInCourse = async (req, res) => {
+    let { uid, cid } = req.params;
+    if (uid === "current") {
       const currentUser = req.session["currentUser"];
-      if (!currentUser) {
-        res.sendStatus(401);
-        return;
-      }
-      userId = currentUser._id;
+      uid = currentUser._id;
     }
-    console.log("Enrolling user in course #2");
-    const courses = courseDao.enrollUserInCourse(userId, courseId);
-    res.json(courses);
+    const status = await enrollmentsDao.enrollUserInCourse(uid, cid);
+    res.send(status);
   };
-  app.post("/api/users/:userId/courses/:courseId/enroll", enrollUserInCourse);
+  const unenrollUserFromCourse = async (req, res) => {
+    let { uid, cid } = req.params;
+    if (uid === "current") {
+      const currentUser = req.session["currentUser"];
+      uid = currentUser._id;
+    }
+    const status = await enrollmentsDao.unenrollUserFromCourse(uid, cid);
+    res.send(status);
+  };
 
-  const unenrollUserInCourse = (req, res) => {
-    let { userId, courseId } = req.params;
-    if (userId === "current") {
-      const currentUser = req.session["currentUser"];
-      if (!currentUser) {
-        res.sendStatus(401);
-        return;
-      }
-      userId = currentUser._id;
+  const findCoursesForUser = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
     }
-    console.log("Un-Enrolling user in course #2");
-    const courses = courseDao.unenrollUserInCourse(userId, courseId);
+    if (currentUser.role === "ADMIN") {
+      const courses = await courseDao.findAllCourses();
+      res.json(courses);
+      return;
+    }
+    let { uid } = req.params;
+    if (uid === "current") {
+      uid = currentUser._id;
+    }
+    const courses = await enrollmentsDao.findCoursesForUser(uid);
     res.json(courses);
   };
-  app.post(
-    "/api/users/:userId/courses/:courseId/unenroll",
-    unenrollUserInCourse
-  );
-
-  const findCoursesForEnrolledUser = (req, res) => {
-    let { userId } = req.params;
-    if (userId === "current") {
-      const currentUser = req.session["currentUser"];
-      if (!currentUser) {
-        res.sendStatus(401);
-        return;
-      }
-      userId = currentUser._id;
-    }
-    const courses = courseDao.findCoursesForEnrolledUser(userId);
-    res.json(courses);
-  };
-  app.get("/api/users/:userId/courses", findCoursesForEnrolledUser);
+  app.get("/api/users/:uid/courses", findCoursesForUser);
 
   const signin = async (req, res) => {
     console.log("HERE SIGN IN");
+
     const { username, password } = req.body;
     const currentUser = await dao.findUserByCredentials(username, password);
     if (currentUser) {
@@ -127,9 +115,9 @@ export default function UserRoutes(app) {
     }
     res.json(currentUser);
   };
-  const createCourse = (req, res) => {
+  const createCourse = async (req, res) => {
     const currentUser = req.session["currentUser"];
-    const newCourse = courseDao.createCourse(req.body);
+    const newCourse = await courseDao.createCourse(req.body);
     enrollmentsDao.enrollUserInCourse(currentUser._id, newCourse._id);
     res.json(newCourse);
   };
@@ -148,4 +136,6 @@ export default function UserRoutes(app) {
   app.post("/api/users/signin", signin);
   app.post("/api/users/signout", signout);
   app.post("/api/users/profile", profile);
+  app.post("/api/users/:uid/courses/:cid", enrollUserInCourse);
+  app.delete("/api/users/:uid/courses/:cid", unenrollUserFromCourse);
 }
