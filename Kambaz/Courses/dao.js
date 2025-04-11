@@ -2,10 +2,12 @@ import model from "./model.js";
 import { v4 as uuidv4 } from "uuid";
 
 export function findAllCourses() {
+  console.log("Finding all courses");
   return model.find();
 }
 
 export function deleteCourse(courseId) {
+  console.log("Deleting course with ID:", courseId);
   return model.deleteOne({ _id: courseId });
 }
 
