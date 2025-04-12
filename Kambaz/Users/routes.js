@@ -74,7 +74,7 @@ export default function UserRoutes(app) {
     if (uid === "current") {
       uid = currentUser._id;
     }
-    console.log("Finding courses for user: ", uid);
+    //console.log("Finding courses for user: ", uid);
     const courses = await enrollmentsDao.findCoursesForUser(uid);
     res.json(courses);
   };
